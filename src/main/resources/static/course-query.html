@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>课程查询</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 20px; }
+        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
+        .query-area { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .query-area input { padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; width: 220px; }
+        .query-area button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: #409eff; color: white; }
+        .btn-success { background: #67c23a; color: white; }
+        .query-area button:hover { transform: translateY(-1px); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ebeef5; padding: 12px; text-align: left; }
+        th { background: #f5f7fa; color: #606266; }
+        tr:hover { background: #fafafa; }
+        .empty { text-align: center; color: #909399; padding: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📖 课程查询</h1>
+    <button class="back-btn" onclick="location.href='course.html'">← 返回首页</button>
+
+    <div class="query-area">
+        <label>课程ID：</label>
+        <input type="number" id="courseId" placeholder="请输入课程ID">
+        <button class="btn-primary" onclick="queryById()">查询</button>
+        <button class="btn-success" onclick="queryAll()">查询所有课程</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>课程名</th>
+            <th>最大容量</th>
+            <th>已选人数</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody">
+        <tr><td colspan="4" class="empty">暂无数据，请点击查询按钮</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    // 按ID查询
+    async function queryById() {
+        const id = document.getElementById('courseId').value;
+        if (!id) { alert('请输入课程ID'); return; }
+        try {
+            const res = await axios.get(`${baseURL}/Query/${id}`, { params: { id } });
+            renderTable([res.data.data]);
+        } catch (e) {
+            alert('查询失败：' + (e.response?.data?.msg || e.message));
+        }
+    }
+    // 查询所有课程
+    async function queryAll() {
+        try {
+            const res = await axios.get(`${baseURL}/Query/all`);
+            renderTable(res.data.data || []);
+        } catch (e) {
+            alert('加载失败：' + (e.response?.data?.msg || e.message));
+        }
+    }
+    // 渲染表格
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无数据</td></tr>';
+            return;
+        }
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.courseName || item.course_name}</td>
+                    <td>${item.maxNum || item.max_num}</td>
+                    <td>${item.selectedNum || item.selected_num}</td>
+                `;
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+</body>
+</html>

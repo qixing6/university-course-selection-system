@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>课程选课系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 40px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        .menu { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .menu button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn-query { background: #409eff; color: white; }
+        .btn-manage { background: #67c23a; color: white; }
+        .btn-selection { background: #e6a23c; color: white; }
+        .menu button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .tip { text-align: center; margin-top: 25px; color: #909399; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎓 课程选课系统</h1>
+    <div class="menu">
+        <button class="btn-query" onclick="location.href='course-query.html'">📖 课程查询</button>
+        <button class="btn-manage" onclick="location.href='course-manage.html'">⚙️ 课程管理</button>
+        <button class="btn-selection" onclick="location.href='course-selection.html'">🎯 选课/退课</button>
+    </div>
+    <p class="tip">请点击上方按钮进入对应功能模块</p>
+</div>
+</body>
+</html>

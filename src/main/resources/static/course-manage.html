@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>课程管理</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 20px; }
+        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
+        .form-item { margin-bottom: 15px; }
+        .form-item label { display: block; margin-bottom: 5px; color: #606266; }
+        .form-item input, .form-item textarea { width: 100%; padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        .btn-save { background: #409eff; color: white; }
+        .btn-reset { background: #909399; color: white; }
+        .btn-cache { background: #e6a23c; color: white; }
+        button:hover { transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⚙️ 课程管理</h1>
+    <button class="back-btn" onclick="location.href='course.html'">← 返回首页</button>
+
+    <div class="form-item">
+        <label>课程名：</label>
+        <input type="text" id="courseName" placeholder="请输入课程名称">
+    </div>
+    <div class="form-item">
+        <label>最大容量：</label>
+        <input type="number" id="maxNum" placeholder="请输入课程最大容量">
+    </div>
+    <div class="form-item">
+        <label>课程描述：</label>
+        <textarea id="description" rows="4" placeholder="请输入课程描述"></textarea>
+    </div>
+    <input type="hidden" id="editId">
+
+    <div class="btn-group">
+        <button class="btn-save" onclick="saveCourse()">保存/更新</button>
+        <button class="btn-reset" onclick="resetForm()">重置</button>
+        <button class="btn-cache" onclick="preloadCache()">缓存预热</button>
+    </div>
+</div>
+
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    // 保存/更新课程
+    async function saveCourse() {
+        const name = document.getElementById('courseName').value;
+        const maxNum = document.getElementById('maxNum').value;
+        const desc = document.getElementById('description').value;
+        const editId = document.getElementById('editId').value;
+        if (!name || !maxNum) { alert('请填写课程名和容量'); return; }
+        const data = { courseName: name, maxNum: maxNum, description: desc };
+        try {
+            if (editId) {
+                await axios.put(`${baseURL}/course/${editId}`, data);
+                alert('课程更新成功');
+            } else {
+                await axios.post(`${baseURL}/course/add`, data);
+                alert('课程新增成功');
+            }
+            resetForm();
+        } catch (e) {
+            alert('操作失败：' + (e.response?.data?.msg || e.message));
+        }
+    }
+    // 重置表单
+    function resetForm() {
+        document.getElementById('courseName').value = '';
+        document.getElementById('maxNum').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('editId').value = '';
+    }
+    // 缓存预热
+    async function preloadCache() {
+        try {
+            await axios.post(`${baseURL}/course/preload`);
+            alert('热点课程缓存预热完成');
+        } catch (e) {
+            alert('缓存预热失败：' + (e.response?.data?.msg || e.message));
+        }
+    }
+</script>
+</body>
+</html>
