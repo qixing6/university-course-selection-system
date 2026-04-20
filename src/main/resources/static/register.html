@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 课程注册系统</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ecfdf5 0%, #f5f7fa 50%, #e0f2fe 100%);
+            padding: 20px;
+        }
+        .card {
+            width: 100%;
+            max-width: 440px;
+            background: #fff;
+            border-radius: 14px;
+            padding: 28px 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        .item { margin-bottom: 14px; }
+        .item label {
+            display: block;
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .item input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+        }
+        .item input:focus { border-color: #409eff; }
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 11px;
+            background: #409eff;
+            color: #fff;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .btn:hover { background: #2b7fd6; }
+        .footer {
+            margin-top: 14px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #409eff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>学生注册</h1>
+    <div class="item">
+        <label for="studentId">学号</label>
+        <input id="studentId" type="text" maxlength="10" placeholder="请输入 6-10 位数字">
+    </div>
+    <div class="item">
+        <label for="name">姓名</label>
+        <input id="name" type="text" maxlength="64" placeholder="请输入姓名">
+    </div>
+    <div class="item">
+        <label for="password">密码</label>
+        <input id="password" type="password" maxlength="32" placeholder="请输入 6-32 位密码">
+    </div>
+    <div class="item">
+        <label for="confirm">确认密码</label>
+        <input id="confirm" type="password" maxlength="32" placeholder="请再次输入密码">
+    </div>
+    <button class="btn" onclick="doRegister()">注册</button>
+    <div class="footer">已有账号？<a href="login.html">去登录</a></div>
+</div>
+
+<script src="js/error-utils.js"></script>
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    const feedback = window.PageFeedback;
+
+    async function doRegister() {
+        const studentId = document.getElementById('studentId').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const confirm = document.getElementById('confirm').value.trim();
+
+        if (!/^\d{6,10}$/.test(studentId)) {
+            alert('学号须为 6-10 位数字');
+            return;
+        }
+        if (!name || name.length > 64) {
+            alert('姓名不能为空且长度不能超过 64');
+            return;
+        }
+        if (password.length < 6 || password.length > 32) {
+            alert('密码长度须为 6-32 位');
+            return;
+        }
+        if (password !== confirm) {
+            alert('两次输入的密码不一致');
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${baseURL}/student/auth/register`, { studentId, name, password });
+            feedback.unwrapResult(response, feedback.failureText('注册'));
+            alert(feedback.successText('注册') + '，请登录');
+            window.location.href = 'login.html';
+        } catch (e) {
+            feedback.alertFailure(e, '注册');
+        }
+    }
+</script>
+</body>
+</html>
