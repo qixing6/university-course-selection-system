@@ -12,9 +12,9 @@ spring:
   # MySQL数据库配置（核心：驱动、URL、账号密码）
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/first?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: 831022806a
+    url: jdbc:mysql://${DB_HOST}:3306/course_seckill?useUnicode=true
+    username: ${DB_USERNAME}
+    password: ${REDIS_PASSWORD}
     # 连接池配置（必加，提升性能）
     hikari:
       maximum-pool-size: 10  # 最大连接数
@@ -26,8 +26,8 @@ spring:
   # Redis配置（补充完整，避免连接异常）
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_HOST}
       database: 0  # 使用第0个库
       timeout: 10000ms  # 连接超时
       # 连接池配置（Redisson依赖此配置）
@@ -70,7 +70,7 @@ springdoc:
 
 # Redisson配置（必须加，否则布隆过滤器/分布式锁用不了）
 Redisson:
-  address: redis://localhost:6379  # Redis地址（和上面spring.data.redis一致）
+  address: redis://localhost:${REDIS_HOST}  # Redis地址（和上面spring.data.redis一致）
   database: 0
   timeout: 10000
   # 若Redis有密码，加这行：
