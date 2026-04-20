@@ -1,15 +1,21 @@
 package com.example.newcourseregistrationsystem.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.commonredis.api.LockClient;
+import com.example.commonredis.impl.RedisCacheClientImpl;
 import com.example.newcourseregistrationsystem.dto.CourseSelectionDTO;
 import com.example.newcourseregistrationsystem.entity.Course;
 import com.example.newcourseregistrationsystem.entity.CourseSelection;
+import com.example.newcourseregistrationsystem.entity.Student;
 import com.example.newcourseregistrationsystem.mapper.CourseMapper;
 import com.example.newcourseregistrationsystem.mapper.CourseSelectionMapper;
+import com.example.newcourseregistrationsystem.mapper.StudentMapper;
 import com.example.newcourseregistrationsystem.service.CourseCommandService;
+import com.example.newcourseregistrationsystem.util.CourseConvert;
+import com.example.newcourseregistrationsystem.vo.CourseSelectionVO;
 import com.example.oldcommonbase.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -27,22 +33,54 @@ public class CourseCommandServiceImpl implements CourseCommandService {
     private static final Logger log = LoggerFactory.getLogger(CourseCommandServiceImpl.class);
 
     private final CourseSelectionMapper courseSelectionMapper;
+    private final StudentMapper studentMapper;
     private final LockClient lockClient;
     private final TransactionTemplate transactionTemplate;
     private final CourseMapper courseMapper;
+    private final RedisCacheClientImpl cacheClient;
+    private final CourseConvert courseConvert;
+
 
     // ========== 选课 ==========
 
     @Override
-    public CourseSelection selectCourse(CourseSelectionDTO dto) {
+    public CourseSelectionVO selectCourse(CourseSelectionDTO dto) {
         validate(dto);
+        // ==========================
+        // 【1. 学生ID/课程ID 合法性校验】
+        // ==========================
         String studentId = dto.getStudentId();
         Long courseId = dto.getCourseId();
+
+        // 1.1 非空校验
+        if (studentId == null || studentId.isBlank()) {
+            throw new BusinessException("学生ID不能为空");
+        }
+        if (courseId == null || courseId <= 0) {
+            throw new BusinessException("课程ID不合法");
+        }
+
+// 1.2 学生ID格式校验
+        if (!studentId.matches("^\\d{6,10}$")) {
+            throw new BusinessException("学生ID格式错误，必须为6-10位纯数字");
+        }
+
+// 1.3 根据学号查询学生（正确写法）
+        QueryWrapper<Student> qw = new QueryWrapper<>();
+        qw.eq("student_id", studentId);
+        Student student = studentMapper.selectOne(qw);
+
+        if (student == null) {
+            throw new BusinessException("学生不存在");
+        }
+
+
+
 
         // 锁粒度：课程级（防超卖）+ 学生课程级（防重复提交）→ 简化：只用课程级，唯一索引防重复
         String lockKey = "course:select:" + courseId;
 
-        return executeWithLock(lockKey, () -> transactionTemplate.execute(status -> {
+        return lockClient.executeWithLock(lockKey, () -> transactionTemplate.execute(status -> {
             //先给这门课加分布式锁，锁成功后，开启数据库事务，在事务内执行对数据库的操作，最后返回收课结果
             //return将锁+事务+选课最终得到的结果返回
             // 1. 查课程（FOR UPDATE或乐观锁，这里用乐观锁）
@@ -66,15 +104,11 @@ public class CourseCommandServiceImpl implements CourseCommandService {
             selection.setCreateTime(LocalDateTime.now());
             courseSelectionMapper.insert(selection);
 
-            // 4. 【关键】乐观锁更新库存：WHERE selected_num = 当前值
-//            int affected = courseMapper.update(null, new LambdaUpdateWrapper<Course>()
-//                    .eq(Course::getId, courseId)
-//                    .eq(Course::getSelectedNum, course.getSelectedNum())  // 乐观锁条件
-//                    .set(Course::getSelectedNum, course.getSelectedNum() + 1));  // 新值
             /**
              *新方法：原子性SQL
              * 1.无BAB问题，不受中间状态干扰
              * 2.性能更优：1次SQL搞定
+             * 3.affected表示有多少行被更新
              */
             int affected= courseMapper.update(null, Wrappers.<Course>lambdaUpdate()
                     .eq(Course::getId,courseId)
@@ -88,7 +122,9 @@ public class CourseCommandServiceImpl implements CourseCommandService {
             }
 
             log.info("学生{}选课{}成功", studentId, courseId);
-            return selection;
+            cacheClient.delete("course:all");
+            cacheClient.delete("course:"+courseId);
+            return courseConvert.toVOSelection(selection);
         }));
     }
 
@@ -97,12 +133,38 @@ public class CourseCommandServiceImpl implements CourseCommandService {
     @Override
     public void dropCourse(CourseSelectionDTO dto) {
         validate(dto);
+        // ==========================
+        // 【1. 学生ID/课程ID 合法性校验】
+        // ==========================
         String studentId = dto.getStudentId();
         Long courseId = dto.getCourseId();
 
+        // 1.1 非空校验
+        if (studentId == null || studentId.isBlank()) {
+            throw new BusinessException("学生ID不能为空");
+        }
+        if (courseId == null || courseId <= 0) {
+            throw new BusinessException("课程ID不合法");
+        }
+
+// 1.2 学生ID格式校验
+        if (!studentId.matches("^\\d{6,10}$")) {
+            throw new BusinessException("学生ID格式错误，必须为6-10位纯数字");
+        }
+
+// 1.3 根据学号查询学生（正确写法）
+        QueryWrapper<Student> qw = new QueryWrapper<>();
+        qw.eq("student_id", studentId);
+        Student student = studentMapper.selectOne(qw);
+
+        if (student == null) {
+            throw new BusinessException("学生不存在");
+        }
+
+
         String lockKey = "course:drop:" + courseId;  // 同课程串行，防止并发减到负数
 
-        executeWithLock(lockKey, () -> {
+        lockClient.executeWithLock(lockKey, () -> {
             transactionTemplate.executeWithoutResult(status -> {
                 // 1. 查课程
                 Course course = courseMapper.selectById(courseId);
@@ -131,6 +193,8 @@ public class CourseCommandServiceImpl implements CourseCommandService {
                     if (affected == 0) {
                         throw new BusinessException("退课失败，课程不存在或已无选课记录");
                     }
+                    cacheClient.delete("course:all");
+                    cacheClient.delete("course:"+courseId);
                 }
             });
             return null;
@@ -146,17 +210,4 @@ public class CourseCommandServiceImpl implements CourseCommandService {
         }
     }
 
-    private <T> T executeWithLock(String lockKey, Supplier<T> action) {
-        //Supplier<T> action:要执行的业务逻辑，用Lambda传入，最后返回一个结果T
-        if (!lockClient.tryLock(lockKey, 3, 10)) {
-            throw new BusinessException("操作频繁，请稍后再试");
-        }
-        try {
-            return action.get();
-        } finally {
-            if (lockClient.isHeldByCurrentThread(lockKey)) {
-                lockClient.unlock(lockKey);
-            }
-        }
-    }
 }

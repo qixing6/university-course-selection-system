@@ -35,7 +35,7 @@ public class CourseServiceImpl implements CourseService {
               course=courseMapper.selectById(id);
                 if(course==null){
                  log.warn("缓存未命中，DB查询不到该课程，ID为{}",id);
-                  throw new BusinessException("课程不存在,ID:"+id);
+                  throw new BusinessException("课程不存在");
                 }
                 cacheClient.setWithExpire(cacheKey,course,60);
                 log.info("缓存更新，ID为{}",id);
@@ -72,7 +72,7 @@ public class CourseServiceImpl implements CourseService {
         int rows=courseMapper.updateById(updatedCourse);
         if(rows==0){
            log.warn("更新课程失败，DB未找到该课程，ID为{}",id);
-            throw new BusinessException("课程不存在,ID:"+id);
+            throw new BusinessException("课程不存在");
         }
         String cacheKey=COURSE_CACHE_KEY_PREFIX+id;
         try {
@@ -106,7 +106,7 @@ public class CourseServiceImpl implements CourseService {
         int rows=courseMapper.deleteById(id);
         if(rows==0){
             log.warn("删除课程失败，DB未找到该课程，ID为{}",id);
-            throw new BusinessException("课程不存在,ID:"+id);
+            throw new BusinessException("课程不存在");
         }
         String cacheKey=COURSE_CACHE_KEY_PREFIX+id;
         try {

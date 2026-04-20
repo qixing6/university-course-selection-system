@@ -5,65 +5,275 @@
     <title>选课/退课</title>
     <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-        body { background: #f0f2f5; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; margin-bottom: 20px; }
-        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
-        .form-item { margin-bottom: 15px; }
-        .form-item label { display: block; margin-bottom: 5px; color: #606266; }
-        .form-item input { width: 100%; padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 16px; }
-        .btn-select { background: #409eff; color: white; }
-        .btn-drop { background: #f56c6c; color: white; }
-        button:hover { transform: translateY(-1px); }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #909399;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #7b7f85;
+        }
+
+        .main {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .operate {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .course-list {
+            flex: 1;
+            min-width: 280px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .form-item {
+            margin-bottom: 18px;
+        }
+
+        .form-item label {
+            display: block;
+            margin-bottom: 6px;
+            color: #606266;
+            font-weight: 500;
+        }
+
+        .form-item input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .btn-select {
+            background: #409eff;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-drop {
+            background: #f56c6c;
+            color: white;
+            flex: 1;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-item {
+            border: 1px solid #ebeef5;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .course-item h3 {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+
+        .course-item p {
+            font-size: 13px;
+            color: #606266;
+            margin: 3px 0;
+        }
+
+        .tip {
+            font-size: 13px;
+            color: #909399;
+            margin-top: 10px;
+        }
+
+        .loading {
+            color: #909399;
+            padding: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🎯 选课/退课</h1>
+    <h1>🎯 选课 / 退课</h1>
     <button class="back-btn" onclick="location.href='course.html'">← 返回首页</button>
 
-    <div class="form-item">
-        <label>学生ID：</label>
-        <input type="number" id="studentId" placeholder="请输入学生ID">
-    </div>
-    <div class="form-item">
-        <label>课程ID：</label>
-        <input type="number" id="courseId" placeholder="请输入课程ID">
-    </div>
+    <div class="main">
+        <!-- 左侧操作区 -->
+        <div class="operate">
+            <div class="form-item">
+                <label>学生 ID</label>
+                <input type="number" id="studentId" placeholder="请输入学生ID">
+            </div>
+            <div class="form-item">
+                <label>课程 ID</label>
+                <input type="number" id="courseId" placeholder="请输入课程ID">
+            </div>
 
-    <div class="btn-group">
-        <button class="btn-select" onclick="selectCourse()">选课</button>
-        <button class="btn-drop" onclick="dropCourse()">退课</button>
+            <div class="btn-group">
+                <button class="btn-select" onclick="selectCourse()">选课</button>
+                <button class="btn-drop" onclick="dropCourse()">退课</button>
+            </div>
+            <p class="tip">右侧可查看所有课程信息，方便对照 ID 操作</p>
+        </div>
+
+        <!-- 右侧课程列表（自动加载） -->
+        <div class="course-list">
+            <h3>📖 当前可选课程</h3>
+            <div id="courseList" class="loading">加载中...</div>
+        </div>
     </div>
 </div>
 
+<script src="js/error-utils.js"></script>
 <script>
     const baseURL = window.location.protocol + '//' + window.location.host + '/api';
-    // 选课
-    async function selectCourse() {
-        const studentId = document.getElementById('studentId').value;
-        const courseId = document.getElementById('courseId').value;
-        if (!studentId || !courseId) { alert('请输入学生ID和课程ID'); return; }
+    const feedback = window.PageFeedback;
+
+    async function ensureLoggedIn() {
         try {
-            await axios.post(`${baseURL}/selection/select`, { studentId, courseId });
-            alert('选课成功！');
-        } catch (e) {
-            alert('选课失败：' + (e.response?.data?.msg || e.message));
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            feedback.unwrapResult(res, '登录已失效，请重新登录');
+            return true;
+        } catch (_) {
+            window.location.href = 'login.html';
+            return false;
         }
     }
+
+    // 页面加载自动加载课程
+    document.addEventListener('DOMContentLoaded', async function () {
+        const ok = await ensureLoggedIn();
+        if (ok) {
+            await loadAllCourses();
+        }
+    });
+
+    // 加载所有课程
+    async function loadAllCourses() {
+        const el = document.getElementById('courseList');
+        try {
+            const res = await axios.get(`${baseURL}/Query/all`);
+            const list = feedback.unwrapResult(res, feedback.failureText('加载课程')) || [];
+            if (list.length === 0) {
+                el.innerHTML = '<div style="padding:20px;text-align:center;color:#999">暂无课程</div>';
+                return;
+            }
+            let html = '';
+            list.forEach(c => {
+                html += `
+                <div class="course-item">
+                    <h3>ID:${c.id} | ${c.courseName}</h3>
+                    <p>教师：${c.teacher || '未设置'}</p>
+                    <p>容量：${c.selectedNum || 0}/${c.maxNum}</p>
+                </div>`;
+            });
+            el.innerHTML = html;
+        } catch (e) {
+            el.innerHTML = `<div style="color:red;padding:20px">${feedback.getFriendlyError(e, feedback.failureText('加载课程'))}</div>`;
+        }
+    }
+
+    // 选课
+    async function selectCourse() {
+        const studentId = document.getElementById('studentId').value.trim();
+        const courseId = document.getElementById('courseId').value.trim();
+        // 选课/退课前加校验
+        if (!/^\d{6,10}$/.test(studentId)) {
+            alert('学生ID格式错误，必须为6-10位纯数字');
+            return;
+        }
+        if (!studentId || !courseId) {
+            alert('请输入学生ID和课程ID');
+            return;
+        }
+        try {
+            const res = await axios.post(`${baseURL}/selection/select`, { studentId, courseId });
+            feedback.unwrapResult(res, feedback.failureText('选课'));
+            feedback.alertSuccess('选课');
+            loadAllCourses(); // 刷新课程人数
+        } catch (e) {
+            feedback.alertFailure(e, '选课');
+        }
+    }
+
     // 退课
     async function dropCourse() {
-        const studentId = document.getElementById('studentId').value;
-        const courseId = document.getElementById('courseId').value;
-        if (!studentId || !courseId) { alert('请输入学生ID和课程ID'); return; }
+        const studentId = document.getElementById('studentId').value.trim();
+        const courseId = document.getElementById('courseId').value.trim();
+        // 选课/退课前加校验
+        if (!/^\d{6,10}$/.test(studentId)) {
+            alert('学生ID格式错误，必须为6-10位纯数字');
+            return;
+        }
+        if (!studentId || !courseId) {
+            alert('请输入学生ID和课程ID');
+            return;
+        }
         try {
-            await axios.post(`${baseURL}/selection/drop`, { studentId, courseId });
-            alert('退课成功！');
+            const res = await axios.post(`${baseURL}/selection/drop`, { studentId, courseId });
+            feedback.unwrapResult(res, feedback.failureText('退课'));
+            feedback.alertSuccess('退课');
+            loadAllCourses(); // 刷新
         } catch (e) {
-            alert('退课失败：' + (e.response?.data?.msg || e.message));
+            feedback.alertFailure(e, '退课');
         }
     }
 </script>

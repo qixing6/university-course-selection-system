@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>课程详情</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; transition: all 0.3s; }
+        .back-btn:hover { background: #82848a; transform: translateY(-1px); }
+        .query-area { display: flex; gap: 10px; margin-bottom: 30px; align-items: center; }
+        .query-area input {
+            flex: 1;
+            max-width: 300px;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .query-area button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #409eff;
+            color: white;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .query-area button:hover { background: #3a8ee6; transform: translateY(-2px); }
+        .detail-card {
+            border: 1px solid #ebeef5;
+            border-radius: 8px;
+            padding: 25px;
+            background: #fafafa;
+        }
+        .detail-item {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #dcdfe6;
+        }
+        .detail-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .detail-label {
+            width: 120px;
+            font-weight: 500;
+            color: #606266;
+        }
+        .detail-value {
+            flex: 1;
+            color: #303133;
+        }
+        .empty { text-align: center; color: #909399; padding: 30px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 课程详情</h1>
+    <button class="back-btn" onclick="location.href='course-manage-index.html'">← 返回管理首页</button>
+
+    <div class="query-area">
+        <input type="number" id="courseId" placeholder="请输入课程ID" min="1">
+        <button onclick="queryCourse()">查询详情</button>
+    </div>
+
+    <div class="detail-card" id="detailCard">
+        <div class="empty">请输入课程ID，点击查询查看详情</div>
+    </div>
+</div>
+
+<script src="js/error-utils.js"></script>
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    const feedback = window.PageFeedback;
+
+    async function ensureLoggedIn() {
+        try {
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            feedback.unwrapResult(res, '登录已失效，请重新登录');
+            return true;
+        } catch (_) {
+            window.location.href = 'login.html';
+            return false;
+        }
+    }
+
+    // 查询课程详情
+    async function queryCourse() {
+        const id = document.getElementById('courseId').value.trim();
+        if (!id || id < 1) { alert('请输入有效的课程ID'); return; }
+
+        try {
+            const res = await axios.get(`${baseURL}/course/${id}`);
+            const course = feedback.unwrapResult(res, feedback.failureText('查询课程详情'));
+            renderDetail(course);
+            feedback.alertSuccess('查询课程详情');
+        } catch (e) {
+            feedback.alertFailure(e, '查询课程详情');
+            document.getElementById('detailCard').innerHTML = '<div class="empty">未查询到该课程</div>';
+        }
+    }
+
+    // 渲染详情
+    function renderDetail(course) {
+        const card = document.getElementById('detailCard');
+        card.innerHTML = `
+            <div class="detail-item">
+                <div class="detail-label">课程ID：</div>
+                <div class="detail-value">${course.id}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">课程名称：</div>
+                <div class="detail-value">${course.courseName}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">授课教师：</div>
+                <div class="detail-value">${course.teacher}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">最大容量：</div>
+                <div class="detail-value">${course.maxNum}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">已选人数：</div>
+                <div class="detail-value">${course.selectedNum || 0}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">课程描述：</div>
+                <div class="detail-value">${course.description || '无'}</div>
+            </div>
+        `;
+    }
+    document.addEventListener('DOMContentLoaded', ensureLoggedIn);
+</script>
+</body>
+</html>

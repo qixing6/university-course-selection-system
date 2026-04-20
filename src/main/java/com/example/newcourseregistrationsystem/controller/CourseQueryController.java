@@ -2,6 +2,7 @@ package com.example.newcourseregistrationsystem.controller;
 
 
 import com.example.newcourseregistrationsystem.dto.CourseQueryDTO;
+import com.example.newcourseregistrationsystem.entity.Course;
 import com.example.newcourseregistrationsystem.service.CourseQueryService;
 import com.example.newcourseregistrationsystem.vo.CourseVO;
 import com.example.oldcommonbase.result.Result;

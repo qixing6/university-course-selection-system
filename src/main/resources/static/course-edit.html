@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>编辑课程</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; transition: all 0.3s; }
+        .back-btn:hover { background: #82848a; transform: translateY(-1px); }
+        .form-item { margin-bottom: 20px; }
+        .form-item label { display: block; margin-bottom: 8px; color: #606266; font-weight: 500; }
+        .form-item input, .form-item textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-item input:focus, .form-item textarea:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+        .form-item textarea { resize: vertical; min-height: 100px; }
+        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-update { background: #67c23a; color: white; }
+        .btn-update:hover { background: #5daf34; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3); }
+        .btn-fetch { background: #409eff; color: white; }
+        .btn-fetch:hover { background: #3a8ee6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); }
+        .required { color: #f56c6c; margin-left: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>✏️ 编辑课程</h1>
+    <button class="back-btn" onclick="location.href='course-manage-index.html'">← 返回管理首页</button>
+
+    <div class="form-item">
+        <label>课程ID：<span class="required">*</span></label>
+        <input type="number" id="courseId" placeholder="请输入要编辑的课程ID" min="1" required>
+        <button class="btn-fetch" onclick="fetchCourse()" style="margin-top: 10px;">查询课程信息</button>
+    </div>
+
+    <div class="form-item">
+        <label>课程名：<span class="required">*</span></label>
+        <input type="text" id="courseName" placeholder="请输入课程名称" required>
+    </div>
+    <div class="form-item">
+        <label>授课教师：<span class="required">*</span></label>
+        <input type="text" id="teacher" placeholder="请输入教师姓名" required>
+    </div>
+    <div class="form-item">
+        <label>最大容量：<span class="required">*</span></label>
+        <input type="number" id="maxNum" placeholder="请输入课程最大容量（必须大于0）" min="1" required>
+    </div>
+    <div class="form-item">
+        <label>课程描述：</label>
+        <textarea id="description" rows="4" placeholder="请输入课程描述（可选）"></textarea>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-update" onclick="updateCourse()">提交更新</button>
+        <button class="back-btn" onclick="resetForm()">重置表单</button>
+    </div>
+</div>
+
+<script src="js/error-utils.js"></script>
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    const feedback = window.PageFeedback;
+
+    async function ensureLoggedIn() {
+        try {
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            feedback.unwrapResult(res, '登录已失效，请重新登录');
+            return true;
+        } catch (_) {
+            window.location.href = 'login.html';
+            return false;
+        }
+    }
+
+    // 根据ID查询课程，回填表单
+    async function fetchCourse() {
+        const id = document.getElementById('courseId').value.trim();
+        if (!id || id < 1) { alert('请输入有效的课程ID'); return; }
+
+        try {
+            const res = await axios.get(`${baseURL}/course/${id}`);
+            const course = feedback.unwrapResult(res, feedback.failureText('查询课程'));
+            // 回填表单
+            document.getElementById('courseName').value = course.courseName;
+            document.getElementById('teacher').value = course.teacher;
+            document.getElementById('maxNum').value = course.maxNum;
+            document.getElementById('description').value = course.description || '';
+            feedback.alertSuccess('查询课程');
+        } catch (e) {
+            feedback.alertFailure(e, '查询课程');
+        }
+    }
+
+    // 更新课程
+    async function updateCourse() {
+        const id = document.getElementById('courseId').value.trim();
+        const courseName = document.getElementById('courseName').value.trim();
+        const teacher = document.getElementById('teacher').value.trim();
+        const maxNum = document.getElementById('maxNum').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        // 校验
+        if (!id || id < 1) { alert('请输入有效的课程ID'); return; }
+        if (!courseName) { alert('课程名称不能为空'); return; }
+        if (!teacher) { alert('教师姓名不能为空'); return; }
+        if (!maxNum || maxNum < 1) { alert('最大人数必须大于0'); return; }
+
+        const data = {
+            courseName: courseName,
+            teacher: teacher,
+            maxNum: parseInt(maxNum),
+            description: description
+        };
+
+        try {
+            const res = await axios.put(`${baseURL}/course/${id}`, data);
+            feedback.unwrapResult(res, feedback.failureText('更新课程'));
+            feedback.alertSuccess('更新课程');
+        } catch (e) {
+            feedback.alertFailure(e, '更新课程');
+        }
+    }
+
+    // 重置表单
+    function resetForm() {
+        document.getElementById('courseId').value = '';
+        document.getElementById('courseName').value = '';
+        document.getElementById('teacher').value = '';
+        document.getElementById('maxNum').value = '';
+        document.getElementById('description').value = '';
+    }
+    document.addEventListener('DOMContentLoaded', ensureLoggedIn);
+</script>
+</body>
+</html>

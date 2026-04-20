@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>删除课程</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; transition: all 0.3s; }
+        .back-btn:hover { background: #82848a; transform: translateY(-1px); }
+        .form-item { margin-bottom: 20px; }
+        .form-item label { display: block; margin-bottom: 8px; color: #606266; font-weight: 500; }
+        .form-item input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-item input:focus {
+            outline: none;
+            border-color: #f56c6c;
+            box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2);
+        }
+        .warning { color: #e6a23c; font-size: 14px; margin: 10px 0; }
+        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-delete { background: #f56c6c; color: white; }
+        .btn-delete:hover { background: #f05050; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3); }
+        .required { color: #f56c6c; margin-left: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗑️ 删除课程</h1>
+    <button class="back-btn" onclick="location.href='course-manage-index.html'">← 返回管理首页</button>
+
+    <div class="form-item">
+        <label>课程ID：<span class="required">*</span></label>
+        <input type="number" id="courseId" placeholder="请输入要删除的课程ID" min="1" required>
+    </div>
+    <p class="warning">⚠️ 注意：删除操作不可逆，请确认课程ID正确后再提交！</p>
+
+    <div class="btn-group">
+        <button class="btn-delete" onclick="deleteCourse()">确认删除</button>
+        <button class="back-btn" onclick="document.getElementById('courseId').value=''">清空输入</button>
+    </div>
+</div>
+
+<script src="js/error-utils.js"></script>
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    const feedback = window.PageFeedback;
+
+    async function ensureLoggedIn() {
+        try {
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            feedback.unwrapResult(res, '登录已失效，请重新登录');
+            return true;
+        } catch (_) {
+            window.location.href = 'login.html';
+            return false;
+        }
+    }
+
+    // 删除课程
+    async function deleteCourse() {
+        const id = document.getElementById('courseId').value.trim();
+        if (!id || id < 1) { alert('请输入有效的课程ID'); return; }
+
+        // 二次确认
+        if (!confirm(`确认要删除ID为 ${id} 的课程吗？此操作无法撤销！`)) {
+            return;
+        }
+
+        try {
+            // 注意：你的Controller里delete接口用了@Valid CourseQueryDTO，这里传id
+            const res = await axios.delete(`${baseURL}/course/${id}`, {
+                data: { id: id } // 适配DTO入参
+            });
+            feedback.unwrapResult(res, feedback.failureText('删除课程'));
+            feedback.alertSuccess('删除课程');
+            document.getElementById('courseId').value = '';
+        } catch (e) {
+            feedback.alertFailure(e, '删除课程');
+        }
+    }
+    document.addEventListener('DOMContentLoaded', ensureLoggedIn);
+</script>
+</body>
+</html>

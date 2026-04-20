@@ -5,92 +5,239 @@
     <title>课程查询</title>
     <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-        body { background: #f0f2f5; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; margin-bottom: 20px; }
-        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
-        .query-area { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .query-area input { padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; width: 220px; }
-        .query-area button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
-        .btn-primary { background: #409eff; color: white; }
-        .btn-success { background: #67c23a; color: white; }
-        .query-area button:hover { transform: translateY(-1px); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ebeef5; padding: 12px; text-align: left; }
-        th { background: #f5f7fa; color: #606266; }
-        tr:hover { background: #fafafa; }
-        .empty { text-align: center; color: #909399; padding: 20px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            color: #1f2937;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #4b5563;
+        }
+
+        .query-area {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .query-area label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .query-area input {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            width: 220px;
+            font-size: 14px;
+        }
+
+        .query-area button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        th {
+            background: #f3f4f6;
+            color: #374151;
+            font-weight: 600;
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #1f2937;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px 0;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>📖 课程查询</h1>
-    <button class="back-btn" onclick="location.href='course.html'">← 返回首页</button>
+    <div class="header">
+        <h1>📖 课程查询</h1>
+        <button class="back-btn" onclick="location.href='course.html'">← 返回首页</button>
+    </div>
 
     <div class="query-area">
         <label>课程ID：</label>
         <input type="number" id="courseId" placeholder="请输入课程ID">
-        <button class="btn-primary" onclick="queryById()">查询</button>
-        <button class="btn-success" onclick="queryAll()">查询所有课程</button>
+        <button class="btn-primary" onclick="queryById()">精确查询</button>
+        <button class="btn-success" onclick="queryAll()">查看全部课程</button>
     </div>
 
     <table>
         <thead>
         <tr>
-            <th>ID</th>
-            <th>课程名</th>
+            <th>课程ID</th>
+            <th>课程名称</th>
             <th>最大容量</th>
             <th>已选人数</th>
         </tr>
         </thead>
         <tbody id="tableBody">
-        <tr><td colspan="4" class="empty">暂无数据，请点击查询按钮</td></tr>
+        <tr>
+            <td colspan="4" class="empty">加载中...</td>
+        </tr>
         </tbody>
     </table>
 </div>
 
+<script src="js/error-utils.js"></script>
 <script>
     const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    const feedback = window.PageFeedback;
+
+    async function ensureLoggedIn() {
+        try {
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            feedback.unwrapResult(res, '登录已失效，请重新登录');
+            return true;
+        } catch (_) {
+            window.location.href = 'login.html';
+            return false;
+        }
+    }
+
     // 按ID查询
     async function queryById() {
-        const id = document.getElementById('courseId').value;
+        const id = document.getElementById('courseId').value.trim();
         if (!id) { alert('请输入课程ID'); return; }
         try {
             const res = await axios.get(`${baseURL}/Query/${id}`, { params: { id } });
-            renderTable([res.data.data]);
+            const course = feedback.unwrapResult(res, feedback.failureText('查询课程'));
+            renderTable([course]);
         } catch (e) {
-            alert('查询失败：' + (e.response?.data?.msg || e.message));
+            feedback.alertFailure(e, '查询课程');
         }
     }
+
     // 查询所有课程
     async function queryAll() {
         try {
             const res = await axios.get(`${baseURL}/Query/all`);
-            renderTable(res.data.data || []);
+            renderTable(feedback.unwrapResult(res, feedback.failureText('加载课程')) || []);
         } catch (e) {
-            alert('加载失败：' + (e.response?.data?.msg || e.message));
+            feedback.alertFailure(e, '加载课程');
         }
     }
+
     // 渲染表格
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无课程数据</td></tr>';
             return;
         }
         data.forEach(item => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                    <td>${item.id}</td>
-                    <td>${item.courseName || item.course_name}</td>
-                    <td>${item.maxNum || item.max_num}</td>
-                    <td>${item.selectedNum || item.selected_num}</td>
-                `;
+                <td>${item.id}</td>
+                <td>${item.courseName || item.course_name}</td>
+                <td>${item.maxNum || item.max_num}</td>
+                <td>${item.selectedNum ?? item.selected_num ?? 0}</td>
+            `;
             tbody.appendChild(tr);
         });
     }
+
+    // 页面加载自动查询
+    document.addEventListener('DOMContentLoaded', async function () {
+        const ok = await ensureLoggedIn();
+        if (ok) {
+            queryAll();
+        }
+    });
 </script>
 </body>
 </html>

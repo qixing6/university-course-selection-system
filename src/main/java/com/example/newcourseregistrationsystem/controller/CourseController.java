@@ -1,6 +1,5 @@
 package com.example.newcourseregistrationsystem.controller;
 
-import com.example.newcourseregistrationsystem.dto.CourseQueryDTO;
 import com.example.newcourseregistrationsystem.dto.CourseSaveDTO;
 import com.example.newcourseregistrationsystem.service.CourseService;
 
@@ -18,8 +17,8 @@ public class CourseController {
     private CourseService courseService;
 
     @GetMapping("/{id}")
-    public Result<CourseVO> getCourseById(@Valid CourseQueryDTO courseQueryDTO){
-        CourseVO courseVO= courseService.getCourseById(courseQueryDTO.getId());
+    public Result<CourseVO> getCourseById(@PathVariable Long id){
+        CourseVO courseVO= courseService.getCourseById(id);
         return Result.success(courseVO);
     }
 
@@ -45,8 +44,8 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<String> deleteCourse(@Valid CourseQueryDTO courseQueryDTO){
-        boolean success=courseService.deleteCourseById(courseQueryDTO.getId());
+    public Result<String> deleteCourse(@PathVariable Long id){
+        boolean success=courseService.deleteCourseById(id);
         return success ? Result.success("课程删除成功") : Result.fail("课程删除失败");
     }
 

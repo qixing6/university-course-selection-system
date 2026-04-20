@@ -35,14 +35,14 @@ public class CourseQueryServiceImpl implements CourseQueryService {
     @Override
     public CourseVO getCourseById(Long id) {
         if(id==null||id<=0){
-            throw new BusinessException(404,"非法的课程ID");
+            throw new BusinessException(404,"课程ID不合法");
         }
 
         String cacheKey = COURSE_CACHE_KEY_PREFIX + id;
         // ========== 1. 缓存穿透防御：布隆过滤器 ==========
         if (!bloomFilterClient.mightContain("courseIdFilter", id)) {
             log.info("课程ID{}不存在于布隆过滤器，拦截穿透请求", id);
-            throw new BusinessException(404,"课程信息不存在,id:"+id);
+            throw new BusinessException(404,"课程不存在");
         }
 
         // ========== 2. 缓存雪崩防御：Redis宕机时降级 ==========
@@ -91,7 +91,7 @@ public class CourseQueryServiceImpl implements CourseQueryService {
             } else {
                 cacheClient.setNullValue(cacheKey, 10);// 空值缓存10分钟
                 log.debug("课程ID{}不存在，写入空值缓存", id);
-                throw new BusinessException(404, "课程信息不存在,ID:" + id);
+                throw new BusinessException(404, "课程不存在");
             }
             return courseVO;
         } catch (InterruptedException e) {
@@ -112,24 +112,22 @@ public class CourseQueryServiceImpl implements CourseQueryService {
     @Override
     public List<CourseVO> getAllCourses() {
             try{
-                List<CourseVO> courseVO=cacheClient.getAll(ALL_COURSES_CACHE_KEY, CourseVO.class);
-                if(courseVO!=null&&!courseVO.isEmpty()){
+                List<CourseVO> course=cacheClient.getAll(ALL_COURSES_CACHE_KEY, CourseVO.class);
+                if(course!=null&&!course.isEmpty()){
                     log.info("查询所有课程，缓存命中");
-                    return courseVO;
+                    return course;
                 }
+
+            List<Course> courseList=courseQueryMapper.selectList(null);
+                List<CourseVO> courseVOList = courseConvert.toVOList(courseList);
+            if(courseVOList!=null&&!courseVOList.isEmpty()) {
+                cacheClient.setWithRandomExpire(ALL_COURSES_CACHE_KEY, courseVOList, 10, 5);
+                log.debug("查询所有课程，数据库查询成功，写入缓存，课程数量:{}", courseVOList.size());
+            }
+            return courseVOList;
             }catch(RedisConnectionFailureException e){
                 log.error("Redis连接失败，直接熔断", e);
                 throw new BusinessException(503, "系统繁忙，请稍后再试");
             }
-
-            List<Course> courseList=courseQueryMapper.selectList(null);
-            List<CourseVO> courseVOList=courseConvert.toVOList(courseList);
-            if(courseVOList!=null&&!courseVOList.isEmpty()) {
-                cacheClient.setWithRandomExpire(ALL_COURSES_CACHE_KEY, courseVOList, 10, 5);
-                log.debug("查询所有课程，数据库查询成功，写入缓存，课程数量:{}", courseVOList.size());
-            }else{
-               log.warn("查询所有课程，数据库查询结果为空");
-            }
-            return courseVOList;
     }
 }

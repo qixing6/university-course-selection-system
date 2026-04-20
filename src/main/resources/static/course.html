@@ -3,29 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <title>课程选课系统</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-        body { background: #f0f2f5; padding: 40px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
-        .menu { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .menu button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
-        .btn-query { background: #409eff; color: white; }
-        .btn-manage { background: #67c23a; color: white; }
-        .btn-selection { background: #e6a23c; color: white; }
-        .menu button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .tip { text-align: center; margin-top: 25px; color: #909399; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            padding: 50px 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 12px;
+            color: #4b5563;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            border: none;
+            background: #ef4444;
+            color: #fff;
+            border-radius: 6px;
+            padding: 7px 12px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #1f2937;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 15px;
+            margin-bottom: 45px;
+        }
+
+        .menu {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 180px;
+            padding: 30px 20px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card .icon {
+            font-size: 36px;
+            margin-bottom: 14px;
+        }
+
+        .card .title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .card-query {
+            background: #3b82f6;
+        }
+
+        .card-manage {
+            background: #10b981;
+        }
+
+        .card-selection {
+            background: #f59e0b;
+        }
+
+        .tip {
+            margin-top: 40px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🎓 课程选课系统</h1>
-    <div class="menu">
-        <button class="btn-query" onclick="location.href='course-query.html'">📖 课程查询</button>
-        <button class="btn-manage" onclick="location.href='course-manage.html'">⚙️ 课程管理</button>
-        <button class="btn-selection" onclick="location.href='course-selection.html'">🎯 选课/退课</button>
+    <div class="top-bar">
+        <span id="welcomeText"></span>
+        <button class="logout-btn" onclick="logout()">退出登录</button>
     </div>
-    <p class="tip">请点击上方按钮进入对应功能模块</p>
+    <h1>🎓 课程选课系统</h1>
+    <p class="subtitle">欢迎使用智能课程管理与选课平台</p>
+
+    <div class="menu">
+        <div class="card card-query" onclick="location.href='course-query.html'">
+            <div class="icon">📖</div>
+            <div class="title">课程查询</div>
+        </div>
+
+        <div class="card card-manage" onclick="location.href='course-manage-index.html'">
+            <div class="icon">⚙️</div>
+            <div class="title">课程管理</div>
+        </div>
+
+        <div class="card card-selection" onclick="location.href='course-selection.html'">
+            <div class="icon">🎯</div>
+            <div class="title">选课 / 退课</div>
+        </div>
+    </div>
+
+    <p class="tip">请点击功能卡片进入对应模块</p>
 </div>
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+
+    function jumpLogin() {
+        window.location.href = 'login.html';
+    }
+
+    async function checkLogin() {
+        try {
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            const student = res.data?.data;
+            document.getElementById('welcomeText').textContent = student
+                ? `你好，${student.name || student.studentId}`
+                : '';
+        } catch (_) {
+            jumpLogin();
+        }
+    }
+
+    async function logout() {
+        try {
+            await axios.post(`${baseURL}/student/auth/logout`);
+        } finally {
+            jumpLogin();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', checkLogin);
+</script>
 </body>
 </html>

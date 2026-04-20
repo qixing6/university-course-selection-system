@@ -11,3 +11,4 @@ public class CourseSelection {
     private Long courseId;
     private LocalDateTime createTime;
 }
+

@@ -1,5 +1,6 @@
 package com.example.newcourseregistrationsystem.service;
 
+import com.example.newcourseregistrationsystem.entity.Course;
 import com.example.newcourseregistrationsystem.vo.CourseVO;
 
 import java.util.List;

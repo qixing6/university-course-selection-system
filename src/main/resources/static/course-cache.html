@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>缓存预热</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #2c3e50; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .back-btn { padding: 8px 16px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 30px; transition: all 0.3s; }
+        .back-btn:hover { background: #82848a; transform: translateY(-1px); }
+        .cache-card {
+            border: 1px solid #ebeef5;
+            border-radius: 8px;
+            padding: 40px 20px;
+            background: #fafafa;
+            margin-bottom: 30px;
+        }
+        .cache-icon { font-size: 60px; color: #e6a23c; margin-bottom: 20px; }
+        .cache-desc { color: #606266; font-size: 16px; margin-bottom: 30px; line-height: 1.6; }
+        button {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #e6a23c;
+            color: white;
+            transition: all 0.3s;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        button:hover { background: #d8932f; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3); }
+        .status { margin-top: 20px; color: #67c23a; font-weight: 500; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⚡ 缓存预热</h1>
+    <button class="back-btn" onclick="location.href='course-manage-index.html'">← 返回管理首页</button>
+
+    <div class="cache-card">
+        <div class="cache-icon">⚙️</div>
+        <p class="cache-desc">
+            缓存预热会将热点课程数据提前加载到Redis缓存中，<br>
+            大幅提升课程查询接口的响应速度，减轻数据库压力。
+        </p>
+        <button onclick="preloadCache()">执行缓存预热</button>
+        <div class="status" id="status"></div>
+    </div>
+</div>
+
+<script src="js/error-utils.js"></script>
+<script>
+    const baseURL = window.location.protocol + '//' + window.location.host + '/api';
+    const feedback = window.PageFeedback;
+
+    async function ensureLoggedIn() {
+        try {
+            const res = await axios.get(`${baseURL}/student/auth/me`);
+            feedback.unwrapResult(res, '登录已失效，请重新登录');
+            return true;
+        } catch (_) {
+            window.location.href = 'login.html';
+            return false;
+        }
+    }
+
+    // 缓存预热
+    async function preloadCache() {
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = '正在执行缓存预热...';
+        statusEl.style.color = '#409eff';
+
+        try {
+            const res = await axios.post(`${baseURL}/course/preload`);
+            feedback.unwrapResult(res, feedback.failureText('缓存预热'));
+            statusEl.textContent = feedback.successText('缓存预热');
+            statusEl.style.color = '#67c23a';
+        } catch (e) {
+            statusEl.textContent = feedback.getFriendlyError(e, feedback.failureText('缓存预热'));
+            statusEl.style.color = '#f56c6c';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', ensureLoggedIn);
+</script>
+</body>
+</html>

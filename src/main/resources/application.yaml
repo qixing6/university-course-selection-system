@@ -41,7 +41,7 @@ spring:
 # MyBatis-Plus配置（修正包路径、补充关键配置）
 mybatis-plus:
   mapper-locations: classpath:mybatis/*.xml  # Mapper XML文件路径（确保resources下有mybatis文件夹）
-  type-aliases-package: com.example.courseregistrationsystem.entity  # 修正为你的实体包路径
+  type-aliases-package: com.example.newcourseregistrationsystem.entity
   global-config:
     db-config:
       id-type: auto  # 主键自增（匹配你的表结构）
@@ -58,8 +58,15 @@ jwt:
   secret: course_system_2026  # JWT签名密钥（自定义，建议生产环境用更长的随机字符串）
   expire: 86400000  # 过期时间（毫秒），86400000=24小时
   token-header: Authorization  # 请求头中令牌的key（比如Bearer token）
-  token-prefix: Bearer  # 令牌前缀
+  token-prefix: "Bearer "  # 令牌前缀（含末尾空格，与 Authorization: Bearer <token> 一致）
+  redis-token-key-prefix: "student:auth:token:"
 
+# SpringDoc / Swagger UI（完整地址见下方「启动和测试」）
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 # Redisson配置（必须加，否则布隆过滤器/分布式锁用不了）
 Redisson:
@@ -73,7 +80,7 @@ Redisson:
 # 日志配置（可选，规范日志输出）
 logging:
   level:
-    com.example.courseregistrationsystem: debug  # 你的业务包日志级别
+    com.example.newcourseregistrationsystem: debug
     org.redisson: warn  # Redisson日志级别
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"

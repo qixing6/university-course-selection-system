@@ -1,5 +1,6 @@
 package com.example.newcourseregistrationsystem.vo;
 
+
 import lombok.Data;
 
 @Data
