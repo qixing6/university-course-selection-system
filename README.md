@@ -1,62 +1,154 @@
-# 大学抢课秒杀系统
-> 高并发场景下的课程抢课/退课/管理系统，基于自研组件封装实现缓存优化、超卖控制，代码结构整洁可维护
+# 大学课程秒杀抢课系统
+高校高并发选课平台 | 前后端分离架构 | 用户鉴权体系 | 全链路缓存治理 | 自研通用组件封装
 
-## 📋 项目简介
-本项目为高校课程抢课秒杀核心系统，针对抢课高峰期高并发场景，解决**缓存三大问题（穿透/击穿/雪崩）**、**课程库存超卖**、**重复选课**等核心痛点；通过自研通用组件封装，实现业务代码与底层缓存/锁逻辑解耦，大幅提升代码整洁度和可维护性。
+## 📑 目录
+1. [项目简介](#项目简介)
+2. [核心功能](#核心功能)
+3. [技术栈](#技术栈)
+4. [自研组件说明](#自研组件说明)
+5. [项目目录结构](#项目目录结构)
+6. [代码封装亮点](#代码封装亮点)
+## 项目简介
+本项目为**高校课程抢课秒杀系统**，针对校园选课高峰期高并发流量场景，解决库存超卖、重复选课、缓存不一致、缓存穿透/击穿/雪崩等后端经典业务痛点。
 
-## ✨ 核心功能
-| 模块         | 核心能力                                                                 |
-|--------------|--------------------------------------------------------------------------|
-| 课程查询     | 缓存穿透/击穿/雪崩防护、热门课程缓存预热、全量课程缓存                     |
-| 课程抢课/退课 | 分布式锁防超卖、乐观锁更新库存、事务保证数据一致性、幂等性校验             |
-| 课程管理     | 课程增删改查、缓存更新/删除、异常兜底                                     |
+项目采用自研通用组件架构，将Redis操作、分布式锁、布隆过滤器、全局异常、通用工具等底层逻辑与业务代码解耦，分层清晰、职责单一、代码可维护性强。
+同时搭建完整**学生登录注册与权限鉴权体系**，基于JWT+Redis实现会话管理、权限拦截、密码安全加密；采用前后端分离架构，配套Vue前端页面，并完成阿里云服务器Docker容器化部署。
 
-## 🛠 技术栈
-- 核心框架：Spring Boot、MyBatis-Plus
-- 缓存/锁：Redis、Redisson（分布式锁/布隆过滤器）
-- 自研组件：common-base（通用异常/工具）、common-redis（缓存/锁/布隆过滤器客户端）
-- 其他：Lombok（简化代码）、TransactionTemplate（编程式事务）
+## 核心功能
+| 模块 | 核心能力 |
+| ---- | -------- |
+| 用户权限模块 | 学生账号注册、账号密码登录、JWT身份鉴权、Redis Token缓存、登录拦截校验、BCrypt密码加密存储 |
+| 课程查询模块 | 缓存穿透/击穿/雪崩全链路防护、热门课程缓存预热、全量课程数据缓存 |
+| 抢课退课模块 | 分布式锁串行控制、乐观锁原子库存更新、编程式事务保证数据一致性、幂等校验防止重复选课 |
+| 课程管理模块 | 课程增删改查、缓存主动更新与失效、异常兜底处理、全局统一异常捕获返回 |
 
-## 📦 自研组件依赖
-本项目核心优化点在于基于两个自制通用组件（轮子）封装业务逻辑，彻底解决代码耦合问题：
-| 组件名称       | 核心功能                                                                 | 作用                                                                 |
-|----------------|--------------------------------------------------------------------------|----------------------------------------------------------------------|
-| common-base    | 通用异常（BusinessException）、参数校验、工具类封装                       | 统一异常处理，减少业务代码中的重复校验/异常抛出逻辑                   |
-| common-redis   | CacheClient（缓存操作）、LockClient（分布式锁）、BloomFilterClient（布隆过滤器） | 封装Redis底层操作，业务层仅关注核心逻辑，无需关心Redis API调用细节     |
+## 技术栈
+- 后端框架：Spring Boot、MyBatis-Plus
+- 缓存与锁：Redis、Redisson分布式锁、布隆过滤器
+- 自研底层组件：common-base、common-redis
+- 安全鉴权：JWT、自定义拦截器、BCrypt密码加密
+- 前端技术：Vue3 + Vite、Axios接口请求封装
+- 其他组件：Lombok、TransactionTemplate编程式事务、MySQL
+- 部署运维：Docker容器化部署、阿里云服务器
 
-## 📂 核心代码结构
-```
+## 自研组件说明
+项目核心工程化亮点为**自研通用组件封装**，抽离重复通用逻辑，实现业务层与基础设施完全解耦，业务代码仅关注自身业务逻辑。
+
+| 组件名称 | 核心功能 | 项目作用 |
+| ---- | ---- | ---- |
+| common-base | 全局统一异常BusinessException、参数校验、通用工具类封装 | 统一异常抛出、日志规范，减少业务代码冗余 |
+| common-redis | 封装缓存客户端CacheClient、分布式锁LockClient、布隆过滤器BloomFilterClient | 屏蔽Redis原生API细节，统一缓存、锁、过滤操作逻辑 |
+通用基础组件：https://github.com/qixing6/common-base
+Redis 封装组件：https://github.com/qixing6/common-redis
+
+## 项目目录结构
+### 一、后端目录（核心）
 src/main/java/com/example/newcourseregistrationsystem/
-├── service/Impl/
-│   ├── CourseQueryServiceImpl.java  # 课程查询（缓存三大问题解决方案）
-│   ├── CourseCommandServiceImpl.java # 抢课/退课（分布式锁+乐观锁+事务）
-│   └── CourseServiceImpl.java       # 课程管理（增删改查+缓存同步）
-├── entity/          # 数据库实体（Course/CourseSelection）
-├── vo/              # 视图对象（CourseVO）
-├── dto/             # 数据传输对象（CourseSelectionDTO/CourseSaveDTO）
-├── mapper/          # 数据库映射层
-└── util/            # 实体转换（CourseConvert）
-```
 
-## 🔥 核心优化亮点（代码整洁性体现）
-### 1. 组件封装解耦，业务逻辑聚焦
-通过`common-redis`组件封装Redis/锁/布隆过滤器底层操作，业务代码无需关注具体API调用，仅聚焦核心逻辑：
+├── config/ # 全局配置层
+
+│ ├── BloomFilterWarmUp.java # 布隆过滤器预热配置
+
+│ ├── GlobalExceptionHandler.java # 全局异常处理
+
+│ ├── JwtProperties.java # JWT 配置
+
+│ ├── OpenApiConfig.java # Swagger 接口文档
+
+│ ├── PasswordEncoderConfig.java # 密码加密配置
+
+│ ├── StudentAuthInterceptor.java # 登录权限拦截器
+
+│ └── WebMvcConfig.java # Web 配置（拦截器注册）
+
+├── controller/ # 接口控制层（对外提供接口）
+
+│ ├── CourseController.java # 课程管理接口
+
+│ ├── CourseQueryController.java # 课程查询接口
+
+│ ├── CourseSelectionController.java # 抢课 / 退课接口
+
+│ └── StudentAuthController.java # 登录 / 注册接口
+
+├── dto/ # 数据传输层（请求入参）
+
+│ ├── CourseQueryDTO.java、CourseSaveDTO.java
+
+│ ├── CourseSelectionDTO.java
+
+│ ├── StudentLoginDTO.java、StudentRegisterDTO.java
+
+├── entity/ # 数据实体层（与数据库表对应）
+
+│ ├── Course.java、CourseSelection.java、Student.java
+
+├── mapper/ # 数据持久层（MyBatis 映射）
+
+│ ├── CourseMapper.java、CourseQueryMapper.java
+
+│ ├── CourseSelectionMapper.java、StudentMapper.java
+
+├── service/ # 业务逻辑层（接口 + 实现）
+
+│ ├── 接口层：CourseCommandService.java 等 5 个业务接口
+
+│ └── impl/：对应业务接口的实现类
+
+├── util/ # 工具类层
+
+│ ├── CourseConvert.java（对象转换）、JwtUtil.java（JWT 工具）
+
+├── vo/ # 视图返回层（接口出参）
+
+│ ├── CourseVO.java、CourseSelectionVO.java
+
+│ ├── StudentLoginVO.java、StudentProfileVO.java
+
+└── 项目启动类（NewCourseRegistrationSystemApplication.java）
+plaintext
+
+### 二、前端目录（Vue3 + Vite）
+frontend/
+├── src/
+│ ├── api/ # 接口请求封装（对接后端接口）
+
+│ ├── router/ # 路由配置（登录 / 注册 / 选课等页面路由
+）
+│ ├── utils/ # 工具类（Token 管理、Axios 请求拦截）
+
+│ ├── views/ # 页面视图（Login.vue、Register.vue、选课页面等）
+
+│ ├── App.vue # 根组件
+
+│ └── main.js # 入口文件
+
+├── index.html # 入口 HTML
+
+├── package.json # 依赖配置
+
+└── vite.config.js # Vite 配置
+
+plaintext
+
+## 代码封装亮点
+### 1. 底层组件解耦，业务代码纯净
+封装Redis、分布式锁、布隆过滤器原生操作，业务层无需关注底层API调用，直接调用封装方法，大幅降低代码耦合。
+
 ```java
-// 优化前：直接操作Redisson/RedisTemplate，代码耦合
 RBloomFilter<Long> bloomFilter = redisson.getBloomFilter("courseIdFilter");
 String json = redis.opsForValue().get(cacheKey);
 RLock lock = redisson.getLock(lockKey);
-
-// 优化后：调用封装的客户端，代码简洁
+组件封装后写法：
+java
+运行
 bloomFilterClient.mightContain("courseIdFilter", id);
 CourseVO cacheJson = cacheClient.get(cacheKey, CourseVO.class);
 lockClient.tryLock(lockKey, 1, 3);
-```
-
-### 2. 职责单一，方法分层清晰
-将参数校验、锁操作、事务执行等通用逻辑抽离为独立工具方法，业务方法仅保留核心逻辑：
-```java
-// 通用锁执行方法（抽离后，抢课/退课复用）
+2. 通用锁模板抽离，统一防死锁
+封装通用加锁执行方法，抢课、退课复用逻辑，规范加锁解锁流程，避免锁泄露与死锁问题。
+java
+运行
 private <T> T executeWithLock(String lockKey, Supplier<T> action) {
     if (!lockClient.tryLock(lockKey, 3, 10)) {
         throw new BusinessException("操作频繁，请稍后再试");
@@ -69,78 +161,25 @@ private <T> T executeWithLock(String lockKey, Supplier<T> action) {
         }
     }
 }
-
-// 抢课核心逻辑（仅关注业务，无需关心锁的细节）
-@Override
-public CourseSelection selectCourse(CourseSelectionDTO dto) {
-    validate(dto);
-    String lockKey = "course:select:" + dto.getCourseId();
-    return executeWithLock(lockKey, () -> transactionTemplate.execute(status -> {
-        // 核心抢课逻辑...
-    }));
-}
-```
-
-### 3. 缓存逻辑标准化，异常处理统一
-基于`CacheClient`封装缓存操作，统一异常捕获和日志输出，避免重复代码：
-```java
-// 课程查询缓存逻辑（标准化）
-@Override
-public CourseVO getCourseById(Long id) {
-    if(id==null||id<=0){
-        throw new BusinessException(404,"非法的课程ID");
-    }
-    String cacheKey = COURSE_CACHE_KEY_PREFIX + id;
-    
-    // 1. 布隆过滤器防穿透（一行调用，无需关心底层实现）
-    if (!bloomFilterClient.mightContain("courseIdFilter", id)) {
-        throw new BusinessException(404,"课程信息不存在,id:"+id);
-    }
-    
-    // 2. Redis异常熔断（统一捕获，无需重复try-catch）
-    try {
-        CourseVO CacheJson = cacheClient.get(cacheKey, CourseVO.class);
-        if (CacheJson != null) return CacheJson;
-    } catch (RedisConnectionFailureException e) {
-        log.error("Redis访问异常，直接熔断", e);
-        throw new BusinessException(503, "系统繁忙，请稍后再试");
-    }
-    
-    // 后续逻辑...
-}
-```
-
-## 🚀 核心特性实现
-### 1. 缓存三大问题解决方案
-| 问题         | 实现方案                                                                 |
-|--------------|--------------------------------------------------------------------------|
-| 缓存穿透     | BloomFilterClient拦截无效课程ID + CacheClient空值缓存                    |
-| 缓存击穿     | LockClient分布式锁 + 双重缓存检查                                        |
-| 缓存雪崩     | CacheClient随机过期时间 + Redis连接异常熔断                              |
-
-### 2. 防超卖核心逻辑
-- 分布式锁（课程级）保证同一课程抢课串行执行；
-- 乐观锁+原子SQL更新库存（`selected_num=selected_num+1`），避免ABA问题；
-- 编程式事务保证选课记录插入和库存更新原子性；
-- 唯一索引（studentId+courseId）兜底防重复选课。
-
-### 3. 缓存管理最佳实践
-- 热门课程主动预热缓存，减少缓存未命中；
-- 课程增删改查后同步删除/更新缓存，避免数据不一致；
-- 全量课程缓存缩短过期时间，平衡性能与一致性。
-
-## 📝 代码规范与整洁性总结
-1. **组件化封装**：基于`common-base`/`common-redis`封装通用逻辑，业务代码仅关注核心场景；
-2. **职责单一**：每个方法仅做一件事（如`executeWithLock`仅处理锁，`validate`仅做参数校验）；
-3. **异常统一**：基于`common-base`的`BusinessException`统一异常抛出，前端友好提示；
-4. **日志规范**：分级日志（info/debug/warn/error），关键操作记录上下文（课程ID/学生ID）；
-5. **命名语义化**：变量/方法命名清晰（如`lockAcquired`/`executeWithLock`），无需额外注释即可理解。
-
-## 📄 许可证
-MIT License
-
-## 📞 联系方式
-- GitHub：qixing6
-- 核心组件仓库：
-  - common-base：https://github.com/qixing6/common-base
-  - common-redis：https://github.com/qixing6/common-redis
+3. 标准化缓存与熔断兜底
+统一缓存查询流程、异常捕获、Redis 熔断降级，无需重复编写异常处理代码，提升接口稳定性。
+高并发核心解决方案
+1. 缓存三大问题完整治理
+表格
+缓存问题	解决方案
+缓存穿透	布隆过滤器拦截无效 ID + 空值缓存
+缓存击穿	分布式互斥锁 + 双重校验
+缓存雪崩	Key 随机过期时间 + Redis 异常熔断降级
+2. 防超卖完整架构
+课程级分布式锁保证请求串行执行
+数据库乐观锁原子更新库存，避免 ABA 问题
+编程式事务保证选课记录插入与库存更新原子一致
+studentId + courseId 联合唯一索引兜底，杜绝重复选课
+3. 缓存一致性策略
+热门课程启动自动缓存预热
+课程增删改后主动失效对应缓存
+合理设置过期时间，平衡性能与数据一致性
+压测性能
+核心选课接口压测 990 QPS 稳定运行
+无库存超卖、无锁异常、无脏数据问题
+有效降低高并发场景下数据库访问压力
